@@ -5,12 +5,12 @@
 #ifndef BITCOIN_COMMON_SYSTEM_RAM_H
 #define BITCOIN_COMMON_SYSTEM_RAM_H
 
-#include <cstddef>
+#include <cstdint>
 #include <optional>
 
 /**
  * Return the total RAM available on the current system, if detectable.
  */
-std::optional<size_t> TryGetTotalRam();
+std::optional<uint64_t> TryGetTotalRam();
 
 #endif // BITCOIN_COMMON_SYSTEM_RAM_H
