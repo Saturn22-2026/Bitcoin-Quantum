@@ -138,6 +138,15 @@ def create_empty_fork(node, fork_length=FORK_LENGTH):
 
     return blocks
 
+def trigger_reorg(node, fork_blocks):
+    '''
+        Submit the fork blocks created by create_empty_fork() to trigger a reorg,
+        then assert the node reorged onto the fork tip.
+    '''
+    for block in fork_blocks:
+        node.submitblock(block.serialize().hex())
+    assert_equal(node.getbestblockhash(), fork_blocks[-1].hash_hex)
+
 def get_witness_script(witness_root, witness_nonce):
     witness_commitment = hash256(ser_uint256(witness_root) + ser_uint256(witness_nonce))
     output_data = WITNESS_COMMITMENT_HEADER + witness_commitment
