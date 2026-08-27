@@ -1,0 +1,68 @@
+name: Minimal CI for mainnet
+
+on:
+  push:
+    branches: [ 'mainnet/prep', 'master', 'main' ]
+  pull_request:
+    branches: [ 'mainnet/prep', 'master', 'main' ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-v1-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
+
+      - name: Run Gradle check
+        run: ./gradlew.bat check --no-daemon --stacktrace --console=plain
+
+  rust-tests:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Run btq-node tests (if present)
+        working-directory: btq-node
+        run: |
+          if [ -f Cargo.toml ]; then
+            cargo test --locked --all
+          else
+            echo "No btq-node Cargo.toml, skipping"
+          fi
+
+  web-build:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Node.js setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Build quantum-crypto-hub if present
+        working-directory: quantum-crypto-hub
+        run: |
+          if [ -f package.json ]; then
+            npm ci --no-audit --prefer-offline
+            npm run build --if-present
+          else
+            echo "No web package.json, skipping"
+          fi
